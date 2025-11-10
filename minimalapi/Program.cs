@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Cors;
 using minimalapi.Entidades;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,14 +19,26 @@ opciones.AddDefaultPolicy(configuracion =>
 });
 
 
-
+builder.Services.AddOutputCache();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 //fin de servicios
+
 
 var app = builder.Build();
 //inicio de area de los middleware
-app.UseCors();
 
-app.MapGet("/", () => "Hello World!");
+//usar si es necesaria la produccion
+//if (builder.Environment.IsDevelopment())
+//{
+
+//}
+app.UseSwagger();
+app.UseSwaggerUI();
+app.UseCors();
+app.UseOutputCache();
+
+app.MapGet("/", [EnableCors(policyName:"Libre")]() => "Hello World!");
 
 app.MapGet("/generos", () =>
 {
@@ -48,6 +61,7 @@ app.MapGet("/generos", () =>
         },
     };
     return generos;
-});
+}).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(15)));
+
 
 app.Run();
