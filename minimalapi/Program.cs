@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using minimalapi;
 using minimalapi.Entidades;
@@ -8,12 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 var origenesPermitidos = builder.Configuration.GetValue<String>("origenesPermitidos")!;
 //inicio de servicios
 builder.Services.AddCors(opciones =>
-{ 
-opciones.AddDefaultPolicy(configuracion =>
+{
+    opciones.AddDefaultPolicy(configuracion =>
 
- {
-    configuracion.WithOrigins(origenesPermitidos).AllowAnyHeader().AllowAnyMethod();
- });
+     {
+         configuracion.WithOrigins(origenesPermitidos).AllowAnyHeader().AllowAnyMethod();
+     });
     opciones.AddPolicy("Libre", configuracion =>
     {
         configuracion.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
@@ -28,7 +29,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IRepositorioGeneros, RepositoriosGeneros>();
 //fin de servicios
 
-builder.Services.AddDbContext<AplicationDbContext>(opciones => 
+builder.Services.AddDbContext<AplicationDbContext>(opciones =>
 opciones.UseSqlServer("name=DefaultConnection"));
 
 var app = builder.Build();
@@ -44,36 +45,66 @@ app.UseSwaggerUI();
 app.UseCors();
 app.UseOutputCache();
 
-app.MapGet("/", [EnableCors(policyName:"Libre")]() => "Hello World!");
 
-app.MapGet("/generos", () =>
+app.MapGet("/", [EnableCors(policyName: "Libre")] () => "Hello World!");
+
+var endpointsGeneros = app.MapGroup("/generos");
+
+endpointsGeneros.MapGet("/", async (IRepositorioGeneros repositorio) =>
 {
-    var generos = new List<Generos>
+
+    return await repositorio.ObtenerTodos();
+}).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(60)).Tag("generos-get"));
+
+endpointsGeneros.MapGet("/{id:int}", async (IRepositorioGeneros repositorio, int id) =>
+{
+    var genero = await repositorio.ObtenerPorId(id);
+
+    if (genero is null)
     {
-        new Generos
-        {
-            Id = 1,
-            Nombre = "Drama"
-        },
-        new Generos
-        {
-            Id = 2,
-            Nombre = "Accion"
-        },
-        new Generos
-        {
-            Id = 3,
-            Nombre = "Comedia"
-        },
-    };
-    return generos;
-}).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(15)));
+        return Results.NotFound();
+    }
+    return Results.Ok(genero);
 
-app.MapPost("/generos", async (Generos genero, IRepositorioGeneros repositorio) =>
-{
-    var id = await repositorio.Crear(genero);
-    return Results.Created($"/generos/{id}",genero);
 });
 
+endpointsGeneros.MapPost("/", async (Generos genero, IRepositorioGeneros repositorio,
+    IOutputCacheStore outputCacheStore) =>
+{
+    var id = await repositorio.Crear(genero);
+    await outputCacheStore.EvictByTagAsync("generos-get", default);
+    return Results.Created($"/generos/{id}", genero);
+});
+endpointsGeneros.MapPut("/{id:int}", async (int id, Generos genero, IRepositorioGeneros repositorio,
+    IOutputCacheStore outputCacheStore
+    ) =>
+ {
+     var existe = await repositorio.Existe(id);
 
+     if (!existe)
+     {
+         return Results.NotFound();
+     }
+     await repositorio.Actualizar(genero);
+     await outputCacheStore.EvictByTagAsync("generos-get", default);
+     return Results.NoContent();
+
+ }
+    );
+
+endpointsGeneros.MapDelete("/{id:int}",async(int id,IRepositorioGeneros repositorio,
+    IOutputCacheStore outputCacheStore) =>
+{
+    var existe = await repositorio.Existe(id);
+
+    if (!existe)
+    {
+        return Results.NotFound();
+    }
+    await repositorio.Borrar(id);
+    await outputCacheStore.EvictByTagAsync("generos-get", default);
+    return Results.NoContent();
+}
+    );
+// fin del middleware
 app.Run();
