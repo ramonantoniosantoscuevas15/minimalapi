@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Cors;
+using Microsoft.EntityFrameworkCore;
+using minimalapi;
 using minimalapi.Entidades;
+using minimalapi.Repositorios;
 
 var builder = WebApplication.CreateBuilder(args);
 var origenesPermitidos = builder.Configuration.GetValue<String>("origenesPermitidos")!;
@@ -22,8 +25,11 @@ opciones.AddDefaultPolicy(configuracion =>
 builder.Services.AddOutputCache();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IRepositorioGeneros, RepositoriosGeneros>();
 //fin de servicios
 
+builder.Services.AddDbContext<AplicationDbContext>(opciones => 
+opciones.UseSqlServer("name=DefaultConnection"));
 
 var app = builder.Build();
 //inicio de area de los middleware
@@ -62,6 +68,12 @@ app.MapGet("/generos", () =>
     };
     return generos;
 }).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(15)));
+
+app.MapPost("/generos", async (Generos genero, IRepositorioGeneros repositorio) =>
+{
+    var id = await repositorio.Crear(genero);
+    return Results.Created($"/generos/{id}",genero);
+});
 
 
 app.Run();
