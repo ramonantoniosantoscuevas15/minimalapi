@@ -31,6 +31,7 @@ builder.Services.AddOutputCache();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IRepositorioGeneros, RepositoriosGeneros>();
+builder.Services.AddScoped<IRepositorioActores, RepositorioActores>();
 builder.Services.AddAutoMapper(typeof(Program));
 //fin de servicios
 
@@ -53,7 +54,9 @@ app.UseOutputCache();
 
 app.MapGet("/", [EnableCors(policyName: "Libre")] () => "Hello World!");
 
- app.MapGroup("/generos").MapGeneros();
+app.MapGroup("/generos").MapGeneros();
+app.MapGroup("/actores").MapActores();
+
 
 
 // fin del middleware
