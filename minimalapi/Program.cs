@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using minimalapi;
+using minimalapi.Endpoints;
 using minimalapi.Entidades;
 using minimalapi.Migrations;
 using minimalapi.Repositorios;
@@ -29,6 +31,7 @@ builder.Services.AddOutputCache();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IRepositorioGeneros, RepositoriosGeneros>();
+builder.Services.AddAutoMapper(typeof(Program));
 //fin de servicios
 
 builder.Services.AddDbContext<AplicationDbContext>(opciones =>
@@ -50,73 +53,9 @@ app.UseOutputCache();
 
 app.MapGet("/", [EnableCors(policyName: "Libre")] () => "Hello World!");
 
-var endpointsGeneros = app.MapGroup("/generos");
+ app.MapGroup("/generos").MapGeneros();
 
-endpointsGeneros.MapGet("/", ObtenerGenenros).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(60)).Tag("generos-get"));
 
-endpointsGeneros.MapGet("/{id:int}",ObtenerGenenroporId );
-
-endpointsGeneros.MapPost("/", CrearGenero);
-
-endpointsGeneros.MapPut("/{id:int}",Actualizargenero);
-
-endpointsGeneros.MapDelete("/{id:int}",Borrargenero);
 // fin del middleware
 app.Run();
 
-static async Task<Ok<List<minimalapi.Entidades.Generos>>> ObtenerGenenros (IRepositorioGeneros repositorio) 
-{
-
-    var generos = await repositorio.ObtenerTodos();
-    return TypedResults.Ok(generos);
-}
-
-static async Task<Results<Ok<minimalapi.Entidades.Generos>,NotFound>> ObtenerGenenroporId (IRepositorioGeneros repositorio, int id) 
-{
-    var genero = await repositorio.ObtenerPorId(id);
-
-    if (genero is null)
-    {
-        return TypedResults.NotFound();
-    }
-    return TypedResults.Ok(genero);
-
-}
-
-static async Task<Created<minimalapi.Entidades.Generos>> CrearGenero (minimalapi.Entidades.Generos genero, IRepositorioGeneros repositorio,
-    IOutputCacheStore outputCacheStore) 
-{
-    var id = await repositorio.Crear(genero);
-    await outputCacheStore.EvictByTagAsync("generos-get", default);
-    return TypedResults.Created($"/generos/{id}", genero);
-}
-
-static async Task<Results<NoContent,NotFound>> Actualizargenero (int id, minimalapi.Entidades.Generos genero, IRepositorioGeneros repositorio,
-   IOutputCacheStore outputCacheStore
-   ) 
-{
-    var existe = await repositorio.Existe(id);
-
-    if (!existe)
-    {
-        return TypedResults.NotFound();
-    }
-    await repositorio.Actualizar(genero);
-    await outputCacheStore.EvictByTagAsync("generos-get", default);
-    return TypedResults.NoContent();
-
-}
-
-static async Task<Results<NoContent,NotFound>> Borrargenero (int id, IRepositorioGeneros repositorio,
-    IOutputCacheStore outputCacheStore) 
-{
-    var existe = await repositorio.Existe(id);
-
-    if (!existe)
-    {
-        return TypedResults.NotFound();
-    }
-    await repositorio.Borrar(id);
-    await outputCacheStore.EvictByTagAsync("generos-get", default);
-    return TypedResults.NoContent();
-}
