@@ -15,7 +15,43 @@ namespace minimalapi.Endpoints
         public static RouteGroupBuilder MapActores(this RouteGroupBuilder group) 
         {
             group.MapPost("/",Crear).DisableAntiforgery();
+            group.MapGet("/",ObtenerTodos).CacheOutput
+            (c=> c.Expire(TimeSpan.FromSeconds(60)).Tag("actores-get"));
+            group.MapGet("/{id:int}",ObternerPorId);
+            group.MapGet("obtenerpornombre/{nombre}", ObtenerPorNombre);
             return group;
+        }
+        static async Task<Ok<List<ActorDTO>>> ObtenerTodos(IRepositorioActores repositorioActores,IMapper mapper,
+            int pagina=1,int recordsPorPagina =10)
+        {
+            var paginacion = new PaginacionDTO { Pagina = pagina, RecordsPorPagina = recordsPorPagina };
+            var actores = await repositorioActores.ObtenerTodos(paginacion);
+            var actoresDTO = mapper.Map<List<ActorDTO>>(actores);
+            return TypedResults.Ok(actoresDTO);
+
+        }
+        static async Task<Results<Ok<ActorDTO>, NotFound>> ObternerPorId(int id, IRepositorioActores repositorio, IMapper mapper)
+        {
+            var actor = await repositorio.ObtenerPorId(id);
+
+            if (actor is null) 
+            {
+                return TypedResults.NotFound();
+            
+            }
+            var actorDTO = mapper.Map<ActorDTO>(actor); 
+            return TypedResults.Ok(actorDTO); 
+
+
+        }
+        static async Task<Ok<List<ActorDTO>>> ObtenerPorNombre(string nombre,
+            IRepositorioActores repositorioActores, 
+            IMapper mapper)
+        {
+            var actores = await repositorioActores.ObtenerPorNombre(nombre);
+            var actoresDTO = mapper.Map<List<ActorDTO>>(actores);
+            return TypedResults.Ok(actoresDTO);
+
         }
         static async Task<Created<ActorDTO>> Crear([FromForm] CrearActorDTO crearActorDTO, 
             IRepositorioActores repositorio, IOutputCacheStore outputCacheStore, IMapper mapper,
