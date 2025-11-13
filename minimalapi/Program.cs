@@ -8,6 +8,7 @@ using minimalapi.Endpoints;
 using minimalapi.Entidades;
 using minimalapi.Migrations;
 using minimalapi.Repositorios;
+using minimalapi.Servicios;
 
 var builder = WebApplication.CreateBuilder(args);
 var origenesPermitidos = builder.Configuration.GetValue<String>("origenesPermitidos")!;
@@ -32,7 +33,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IRepositorioGeneros, RepositoriosGeneros>();
 builder.Services.AddScoped<IRepositorioActores, RepositorioActores>();
+builder.Services.AddScoped<IAlmacenadorArchivos, AlmacenadorArchivoLocal>();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddAutoMapper(typeof(Program));
+
 //fin de servicios
 
 builder.Services.AddDbContext<AplicationDbContext>(opciones =>
@@ -48,6 +52,7 @@ var app = builder.Build();
 //}
 app.UseSwagger();
 app.UseSwaggerUI();
+app.UseStaticFiles();
 app.UseCors();
 app.UseOutputCache();
 
