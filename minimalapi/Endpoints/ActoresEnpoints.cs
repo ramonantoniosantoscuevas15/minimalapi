@@ -19,6 +19,7 @@ namespace minimalapi.Endpoints
             (c=> c.Expire(TimeSpan.FromSeconds(60)).Tag("actores-get"));
             group.MapGet("/{id:int}",ObternerPorId);
             group.MapGet("obtenerpornombre/{nombre}", ObtenerPorNombre);
+            group.MapPut("/{id:int}", Actualizar).DisableAntiforgery();
             return group;
         }
         static async Task<Ok<List<ActorDTO>>> ObtenerTodos(IRepositorioActores repositorioActores,IMapper mapper,
@@ -70,6 +71,32 @@ namespace minimalapi.Endpoints
             return TypedResults.Created($"/actores/{id}", actorDTO);
 
         }
+        static async Task<Results<NoContent, NotFound>> Actualizar(int id,
+       [FromForm] CrearActorDTO crearActorDTO, IRepositorioActores repositorio,
+       IAlmacenadorArchivos almacenadorArchivos, IOutputCacheStore outputCacheStore, IMapper mapper)
+        {
+            var actorDB = await repositorio.ObtenerPorId(id);
+
+            if (actorDB is null)
+            {
+                return TypedResults.NotFound();
+            }
+            var actorParaActualizar = mapper.Map<Actor>(crearActorDTO);
+            actorParaActualizar.Id = id;    
+            actorParaActualizar.Foto = actorDB.Foto;
+
+            if(crearActorDTO.Foto is not null)
+            {
+                var url = await almacenadorArchivos.Editar(actorParaActualizar.Foto, contenedor,
+                    crearActorDTO.Foto);
+                actorParaActualizar.Foto =url;
+            }
+            await repositorio.Actualizar(actorParaActualizar);
+            await outputCacheStore.EvictByTagAsync("actores-get", default);
+            return TypedResults.NoContent();
+
+        }
 
     }
+   
 }

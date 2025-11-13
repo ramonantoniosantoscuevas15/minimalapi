@@ -20,7 +20,7 @@ namespace minimalapi.Repositorios
         {
             var queryable = context.Actores.AsQueryable();
             await httpContext.InsertarParametrosPaginacionEncabecera(queryable);
-            return await context.Actores.OrderBy(a => a.Nombre).ToListAsync();
+            return await queryable.OrderBy(a => a.Nombre).Paginar(paginacionDTO).ToListAsync();
         }
 
         public async Task<Actor?> ObtenerPorId(int id)
