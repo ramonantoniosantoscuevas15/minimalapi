@@ -15,9 +15,12 @@ namespace minimalapi
             modelBuilder.Entity<Entidades.Generos>().Property(p => p.Nombre).HasMaxLength(50);
             modelBuilder.Entity<Actor>().Property(p => p.Nombre).HasMaxLength(150);
             modelBuilder.Entity<Actor>().Property(P=>P.Foto).IsUnicode(false);
+            modelBuilder.Entity<Pelicula>().Property(p=> p.Titulo).HasMaxLength(150);
+            modelBuilder.Entity<Pelicula>().Property(p => p.Poster).IsUnicode(false);
         }
         public DbSet<Entidades.Generos> Generos {  get; set; }
         public DbSet<Actor>Actores { get; set; }
+        public DbSet<Pelicula> Peliculas { get; set; }
 
         protected AplicationDbContext()
         {

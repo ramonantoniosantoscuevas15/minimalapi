@@ -20,6 +20,7 @@ namespace minimalapi.Endpoints
             group.MapGet("/{id:int}",ObternerPorId);
             group.MapGet("obtenerpornombre/{nombre}", ObtenerPorNombre);
             group.MapPut("/{id:int}", Actualizar).DisableAntiforgery();
+            group.MapDelete("/{id:int}",Borrar);
             return group;
         }
         static async Task<Ok<List<ActorDTO>>> ObtenerTodos(IRepositorioActores repositorioActores,IMapper mapper,
@@ -96,6 +97,25 @@ namespace minimalapi.Endpoints
             return TypedResults.NoContent();
 
         }
+
+        static async Task<Results<NoContent,NotFound>> Borrar(int id,IRepositorioActores repositorioActores,
+            IOutputCacheStore outputCacheStore, IAlmacenadorArchivos almacenadorArchivos)
+        {
+            var actorDB = await repositorioActores.ObtenerPorId(id);
+
+            if(actorDB is null) 
+            { 
+                return TypedResults.NotFound(); 
+            }
+            await repositorioActores.Borrar(id);
+            await almacenadorArchivos.Borrar(actorDB.Foto, contenedor);
+            await outputCacheStore.EvictByTagAsync("actores-get", default);
+            return TypedResults.NoContent();
+
+
+        }
+
+
 
     }
    
