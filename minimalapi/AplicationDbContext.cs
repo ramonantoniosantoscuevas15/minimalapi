@@ -21,6 +21,7 @@ namespace minimalapi
         public DbSet<Entidades.Generos> Generos {  get; set; }
         public DbSet<Actor>Actores { get; set; }
         public DbSet<Pelicula> Peliculas { get; set; }
+        public DbSet<Comentario> Comentarios { get; set; }
 
         protected AplicationDbContext()
         {
