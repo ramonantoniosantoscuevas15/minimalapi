@@ -11,5 +11,6 @@ namespace minimalapi.Repositorios
         Task<bool>Existe(int id);
         Task Actualizar(Generos genero);
         Task Borrar(int id);
+        Task<List<int>> Existen(List<int> ids);
     }
 }

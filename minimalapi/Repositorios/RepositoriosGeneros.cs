@@ -31,6 +31,11 @@ namespace minimalapi.Repositorios
             return await context.Generos.AnyAsync(x =>  x.Id == id);
         }
 
+        public async Task<List<int>> Existen(List<int> ids)
+        {
+            return await context.Generos.Where(g => ids.Contains(g.Id)).Select(g=>g.Id).ToListAsync();
+        }
+
         public async Task<Generos?> ObtenerPorId(int id)
         {
             return await context.Generos.FirstOrDefaultAsync(x => x.Id ==id);

@@ -1,4 +1,5 @@
-﻿namespace minimalapi.DTOs
+﻿
+namespace minimalapi.DTOs
 {
     public class PeliculaDTO
     {
@@ -9,5 +10,6 @@
         public DateTime FechaLanzamiento { get; set; }
 
         public string? Poster { get; set; }
+        public List<ComentarioDTO> Comentarios { get; set; } = new List<ComentarioDTO>();
     }
 }

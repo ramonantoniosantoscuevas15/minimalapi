@@ -16,6 +16,8 @@ namespace minimalapi.Endpoints
             (TimeSpan.FromSeconds(60)).Tag("comentarios-get"));
             group.MapGet("/{id:int}",ObtenerPorId).WithName("ObtenerComentarioPorId");
             group.MapPost("/",Crear);
+            group.MapPut("/{id:int}", Actualizar);
+            group.MapDelete("/{id:int}", Borrar);
             return group;
         }
 
@@ -62,6 +64,45 @@ namespace minimalapi.Endpoints
             await outputCacheStore.EvictByTagAsync("comentarios-get",default);
             var comentariosDTO = mapper.Map<ComentarioDTO>(comentario);
             return TypedResults.CreatedAtRoute(comentariosDTO, "ObtenerComentarioPorId", new {id,peliculaId});
+        }
+
+        static async Task<Results<NoContent,NotFound>> Actualizar(int peliculaId,int id, CrearComentarioDTO crearComentarioDTO,
+            IOutputCacheStore outputCacheStore, IRepositoriosComentarios repositoriosComentarios, IRepositorioPeliculas repositorioPeliculas,
+            IMapper mapper)
+        {
+            if (!await repositorioPeliculas.Existe(peliculaId))
+            {
+                return TypedResults.NotFound();
+            }
+
+            if (!await repositoriosComentarios.Existe(id))
+            {
+                return TypedResults.NotFound();
+            }
+            var comentario = mapper.Map<Comentario>(crearComentarioDTO);
+            comentario.Id = id;
+            comentario.PeliculaId = peliculaId;
+
+            await repositoriosComentarios.Actualizar(comentario);
+            await outputCacheStore.EvictByTagAsync("comentarios-get", default);
+            return TypedResults.NoContent();
+
+        }
+
+        static async Task< Results< NoContent,NotFound>> Borrar(int peliculaId, int id, IRepositoriosComentarios repositorio,
+            IOutputCacheStore outputCacheStore)
+        {
+            if (!await repositorio.Existe(id))
+            {
+                return TypedResults.NotFound();
+            }
+
+
+            await repositorio.Borrar(id);
+            await outputCacheStore.EvictByTagAsync("comentarios-get", default);
+            return TypedResults.NoContent();
+
+
         }
 
     }

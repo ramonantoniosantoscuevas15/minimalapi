@@ -11,6 +11,7 @@
         public string? Poster {  get; set; }
 
         public List<Comentario> Comentarios { get; set; } = new List<Comentario>();
+        public List<GeneroPelicula> GeneroPeliculas { get; set; } = new List<GeneroPelicula>();
 
     }
 }
