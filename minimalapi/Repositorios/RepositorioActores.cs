@@ -48,6 +48,11 @@ namespace minimalapi.Repositorios
             return await context.Actores.AnyAsync(a => a.Id == id);
         }
 
+        public async Task<List<int>> Existen (List<int> Ids)
+        {
+            return await context.Actores.Where(a => Ids.Contains(a.Id)).Select(a => a.Id).ToListAsync();
+        }
+
         public async Task Actualizar(Actor actor)
         {
             context.Update(actor);

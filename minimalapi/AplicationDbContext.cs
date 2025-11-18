@@ -18,12 +18,14 @@ namespace minimalapi
             modelBuilder.Entity<Pelicula>().Property(p=> p.Titulo).HasMaxLength(150);
             modelBuilder.Entity<Pelicula>().Property(p => p.Poster).IsUnicode(false);
             modelBuilder.Entity<GeneroPelicula>().HasKey(g => new {g.GeneroId,g.PeliculaId});
+            modelBuilder.Entity<ActorPelicula>().HasKey(a => new {a.ActorId,a.PeliculaId});
         }
         public DbSet<Entidades.Generos> Generos {  get; set; }
         public DbSet<Actor>Actores { get; set; }
         public DbSet<Pelicula> Peliculas { get; set; }
         public DbSet<Comentario> Comentarios { get; set; }
         public DbSet<GeneroPelicula>GenerosPeliculas { get; set; }
+        public DbSet<ActorPelicula> ActoresPeliculas { get; set; }
 
         protected AplicationDbContext()
         {

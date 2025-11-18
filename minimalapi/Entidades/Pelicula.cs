@@ -12,6 +12,7 @@
 
         public List<Comentario> Comentarios { get; set; } = new List<Comentario>();
         public List<GeneroPelicula> GeneroPeliculas { get; set; } = new List<GeneroPelicula>();
+        public List<ActorPelicula> ActoresPeliculas { get; set; } = new List<ActorPelicula>();
 
     }
 }
