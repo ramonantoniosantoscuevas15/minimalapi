@@ -33,6 +33,10 @@ namespace minimalapi.Repositorios
         {
             return await context.Peliculas
                 .Include(p => p.Comentarios).
+                Include(p=> p.GeneroPeliculas)
+                .ThenInclude(gp => gp.Genero).
+                Include(p => p.ActoresPeliculas.OrderBy(a=> a.Orden)).
+                ThenInclude(ap => ap.Actor).
                 AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
         }
 
